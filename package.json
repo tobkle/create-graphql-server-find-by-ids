@@ -1,0 +1,21 @@
+{
+  "name": "create-graphql-server-find-by-ids",
+  "version": "0.0.4",
+  "description": "cached findByIds with dataloader and authorization",
+  "main": "index.js",
+  "repository": "https://github.com/tobkle/create-graphql-server-find-by-ids",
+  "author": "Tobias Klemmer <tobias@klemmer.info>",
+  "license": "MIT",
+  "keywords": [
+    "create-graphql-server",
+    "graphql",
+    "findByIds"
+  ],
+  "bugs": {
+    "url": "https://github.com/tobkle/create-graphql-server-find-by-ids/issues"
+  },
+  "homepage": "https://github.com/tobkle/create-graphql-server#readme",
+  "dependencies": {
+    "babylon": "^6.18.0"
+  }
+}
