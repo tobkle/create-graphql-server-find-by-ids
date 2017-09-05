@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl">
+  <title data-ice="title">Home | create-graphql-server-find-by-ids</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Adds findByIds to create-graphql-server"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="create-graphql-server-find-by-ids"><meta property="twitter:description" content="Adds findByIds to create-graphql-server"></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/tobkle/create-graphql-server-find-by-ids"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-findByIds">findByIds</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><p><a href="http://badge.fury.io/js/create-graphql-server-find-by-ids"><img src="https://badge.fury.io/js/create-graphql-server-find-by-ids.svg" alt="npm version"></a> <a href="https://travis-ci.org/tobkle/create-graphql-server-find-by-ids"><img src="https://travis-ci.org/tobkle/create-graphql-server-find-by-ids.svg?branch=master" alt="Build Status"></a> <a href="https://coveralls.io/github/tobkle/create-graphql-server-find-by-ids?branch=master"><img src="https://coveralls.io/repos/github/tobkle/create-graphql-server-find-by-ids/badge.svg?branch=master" alt="Coverage Status"></a></p>
+<h1 id="create-graphql-server-find-by-ids">create-graphql-server-find-by-ids</h1><p>Adds to the original findByIds an authorization enhancement for the GraphQL-Server-Generator: <strong>create-graphql-server</strong></p>
+<p><a href="https://github.com/tmeasday/mongo-find-by-ids">The original tmeasday/mongo-find-by-ids you find here</a>.</p>
+<h2 id="usage">Usage</h2><p>It provides just one function &quot;findByIds&quot;, and it adds to the original version of tmeasday the authQuery and later combination of baseQuery and authQuery.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">export function findByIds(
+  collection: any,
+  ids: Array&lt;any&gt; = [],
+  authQuery?: any = {}
+): any {
+  const baseQuery = { _id: { $in: ids } };
+  const finalQuery = { ...baseQuery, ...authQuery };
+  return collection
+    .find(finalQuery)
+    .toArray()
+    .then(docs =&gt; {
+      const idMap = {};
+      docs.forEach(d =&gt; {
+        idMap[d._id] = d;
+      });
+      return ids.map(id =&gt; idMap[id]);
+    });
+}</code>
+</code></pre>
+<h2 id="installation">Installation</h2><p>Please add the following lines to your create-graphql-server project in server/authenticate.js. If you&apos;ve forked the original create-graphql-server then don&apos;t forget to add it also to the authenticate file in the &quot;skel&quot; folder, otherwise your tests will fail.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">import passport from &apos;passport&apos;;
+import { Strategy, ExtractJwt } from &apos;passport-jwt&apos;;
+import jwt from &apos;jwt-simple&apos;;
+import { ObjectId } from &apos;mongodb&apos;;
+import nodeify from &apos;nodeify&apos;;
+import bcrypt from &apos;bcrypt&apos;;
+import DataLoader from &apos;dataloader&apos;;  // &lt;===
+import { findByIds } from &apos;create-graphql-server-find-by-ids&apos;; // &lt;===
+
+const KEY = &apos;test-key&apos;;
+let Loader;   // &lt;===
+
+async function userFromPayload(request, jwtPayload) {
+  if (!jwtPayload.userId) {
+    throw new Error(&apos;No userId in JWT&apos;);
+  }
+  return await Loader.load(ObjectId(jwtPayload.userId));  // &lt;===
+}
+
+passport.use(new Strategy({
+  jwtFromRequest: ExtractJwt.fromAuthHeader(),
+  secretOrKey: KEY,
+  passReqToCallback: true,
+}, (request, jwtPayload, done) =&gt; {
+  nodeify(userFromPayload(request, jwtPayload), done);
+}));
+
+export default function addPassport(app, User) {
+  Loader = new DataLoader(ids =&gt; findByIds(User, ids));  // &lt;===
+
+  app.use(passport.initialize());
+
+  app.post(&apos;/login&apos;, async (req, res, next) =&gt; {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        throw new Error(&apos;Username or password not set on request&apos;);
+      }
+
+      const user = await User.findOne({ email });
+      if (!user || !(await bcrypt.compare(password, user.hash))) {
+        throw new Error(&apos;User not found matching email/password combination&apos;);
+      }
+
+      const payload = {
+        userId: user._id.toString(),
+      };
+
+      const token = jwt.encode(payload, KEY);
+      res.json({ token });
+    } catch (e) {
+      next(e);
+    }
+  });
+}</code>
+</code></pre>
+<h2 id="api-documentation">API Documentation</h2><p><a href="https://tobkle.github.io/create-graphql-server-find-by-ids/">Goto the API Documentatiaon</a></p>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.0.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
