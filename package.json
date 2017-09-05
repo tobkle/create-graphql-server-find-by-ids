@@ -1,6 +1,6 @@
 {
   "name": "create-graphql-server-find-by-ids",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "cached findByIds with dataloader and authorization",
   "main": "index.js",
   "repository": "https://github.com/tobkle/create-graphql-server-find-by-ids",
