@@ -1,0 +1,12 @@
+[ignore]
+.*/lib/.*
+.*/dist/.*
+.*/coverage/.*
+.*/resources/.*
+
+[include]
+
+[libs]
+
+[options]
+experimental.const_params=true
